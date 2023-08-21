@@ -16,10 +16,11 @@ chrono = "0.4.26"
 clap = { version = "4.3.23", features = ["derive"] }
 crossbeam-channel = "0.5.8"
 hex = "0.4.3"
-indicatif = "0.17.6"
+kdam = {version = "0.4.0", features = ["template", "unicode"]}
 lazy_static = "1.4.0"
 num_cpus = "1.16.0"
 regex = "1.9.3"
+terminal_size = "0.2.6"
 walkdir = "2.3.3"
 
 [build-dependencies]

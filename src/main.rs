@@ -390,6 +390,8 @@ fn check(
                                     )
                                 }
                             }
+
+                            pm.refresh().unwrap();
                         }
 
                         if tag_count != 0 {
@@ -426,6 +428,7 @@ fn check(
 
                         if !args.no_progress {
                             pm.insert_error(&identifier, &message);
+                            pm.refresh().unwrap();
                         }
                     }
                     ProgressWrapper::Result {
@@ -476,6 +479,8 @@ fn check(
                             {
                                 item.complete_all_hash("No match");
                             }
+
+                            pm.refresh().unwrap();
                         }
 
                         if progress_details.info.finished_tags == progress_details.info.total_tags {
@@ -523,6 +528,8 @@ fn check(
                                 {
                                     item.complete_all_hash("No match");
                                 }
+
+                                pm.refresh().unwrap();
                             }
 
                             if progress_details.info.finished_tags
@@ -559,6 +566,7 @@ fn check(
 
                             if !args.no_progress {
                                 pm.complete_file(&identifier, &message);
+                                pm.refresh().unwrap();
                             }
                         }
                     },
@@ -811,6 +819,7 @@ fn update(
                             eprintln!("[{}][ERROR][{}]", identifier, message);
                         } else {
                             pm.insert_error(&identifier, &message);
+                            pm.refresh().unwrap();
                         }
                     }
                     ProgressWrapper::Result {
@@ -828,6 +837,8 @@ fn update(
                                 str_tags.iter(),
                             );
                             item.complete_hash(tag_to_str(&tag), &digest);
+
+                            pm.refresh().unwrap();
                         }
 
                         let path = match identifier.clone() {
@@ -877,6 +888,8 @@ fn update(
                                     str_tags.iter(),
                                 );
                                 item.complete_hash(tag_to_str(&tag), &message);
+
+                                pm.refresh().unwrap();
                             }
 
                             if progress_details.finished_tags == progress_details.total_tags {
@@ -900,6 +913,7 @@ fn update(
                                 eprintln!("[{}][ERROR][{}]", progress_details.short_id, message);
                             } else {
                                 pm.complete_file(&progress_details.short_id, &message);
+                                pm.refresh().unwrap();
                             }
 
                             if immediate {
@@ -930,6 +944,8 @@ fn update(
                             str_tags.iter(),
                         );
                         item.set_position(tag_to_str(&tag), position);
+
+                        pm.refresh().unwrap();
                     }
                     ProgressWrapper::End => break,
                 }
