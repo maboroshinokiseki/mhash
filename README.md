@@ -22,3 +22,20 @@ mhash --sha1 -r /path_of_the_folder
 ```
 
 for more usage, just check mhash --help
+
+# Benchmark
+OS: Fedora 38
+
+CPU: i7-11800H
+
+HDD: WD Blue, reading speed is about 180 MB/s
+
+SSD: Samsung 970 EVO Plus, reading speed is about 3,500 MB/s
+
+File System: Btrfs
+
+Test Files: Iso files of top 5 distros from DistroWatch
+
+Desc: f means --file-count, b means --block-count
+
+![Benchmark](https://github.com/maboroshinokiseki/mhash/assets/15065470/8a5c195a-4105-4855-bc7f-4b9b043e3d3c)
