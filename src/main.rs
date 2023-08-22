@@ -88,7 +88,7 @@ fn main() -> anyhow::Result<()> {
         b.on_progress(None)
     };
 
-    let (mut file, root) = if let Some(path) = args.update.as_ref() {
+    let (mut file, root, hint) = if let Some(path) = args.update.as_ref() {
         (
             Some(
                 OpenOptions::new()
@@ -99,6 +99,7 @@ fn main() -> anyhow::Result<()> {
                     .open(path)?,
             ),
             path.parent().unwrap().to_owned(),
+            get_hasher_tag_from_extension(path),
         )
     } else if let Some(path) = args.output.as_ref() {
         (
@@ -110,14 +111,16 @@ fn main() -> anyhow::Result<()> {
                     .open(path)?,
             ),
             path.parent().unwrap().to_owned(),
+            None,
         )
     } else if let Some(Some(path)) = args.check.as_ref() {
         (
             Some(OpenOptions::new().read(true).open(path)?),
             path.parent().unwrap().to_owned(),
+            get_hasher_tag_from_extension(path),
         )
     } else {
-        (None, env::current_dir()?)
+        (None, env::current_dir()?, None)
     };
 
     let old_data = match args.check.is_some() || args.update.is_some() {
@@ -133,10 +136,16 @@ fn main() -> anyhow::Result<()> {
         file.as_mut().unwrap().set_len(0)?;
     }
 
+    let mut hints = get_hasher_tags(&args);
+    if let Some(hint) = hint {
+        hints.push(hint);
+    }
+
     let sfv_builder = sfv_manager::SfvManagerBuilder::new()
         .format(args.format)
         .has_header(args.header)
         .root_path(root.clone())
+        .hints(hints)
         .old_data(old_data);
 
     let sfv = match args.update.is_some() || args.output.is_some() {
@@ -1003,6 +1012,7 @@ struct ProgressFileInfo {
     last_piece_size: usize,
 }
 
+#[derive(Debug)]
 struct DigestInfos {
     digest: String,
     exact_tag: Option<HasherTag>,

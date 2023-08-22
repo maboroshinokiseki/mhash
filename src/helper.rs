@@ -1,10 +1,42 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
 
 use lazy_static::lazy_static;
 
 use libmhash::paranoid_hash::{self, HasherTag};
 
 use crate::args::Args;
+
+pub fn get_hasher_tag_from_extension(path: &Path) -> Option<HasherTag> {
+    let extension = path
+        .extension()?
+        .to_string_lossy()
+        .to_ascii_uppercase()
+        .replace('-', "_");
+    let map = vec![
+        ("CRC32C", HasherTag::CRC32C),
+        ("CRC32", HasherTag::CRC32),
+        ("MD2", HasherTag::MD2),
+        ("MD4", HasherTag::MD4),
+        ("MD5", HasherTag::MD5),
+        ("SHA1", HasherTag::SHA1),
+        ("SHA224", HasherTag::SHA2_224),
+        ("SHA256", HasherTag::SHA2_256),
+        ("SHA384", HasherTag::SHA2_384),
+        ("SHA512", HasherTag::SHA2_512),
+        ("SHA3_224", HasherTag::SHA3_224),
+        ("SHA3_256", HasherTag::SHA3_256),
+        ("SHA3_384", HasherTag::SHA3_384),
+        ("SHA3_512", HasherTag::SHA3_512),
+    ];
+
+    for (key, valua) in map {
+        if extension.contains(key) {
+            return Some(valua);
+        }
+    }
+
+    None
+}
 
 pub fn get_hasher_tags(args: &Args) -> Vec<HasherTag> {
     let mut tags = vec![];

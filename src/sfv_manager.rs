@@ -21,6 +21,7 @@ pub struct SfvManagerBuilder {
     format: crate::Format,
     old_data: Option<String>,
     root: Option<PathBuf>,
+    hints: Vec<HasherTag>,
     writer: Option<Box<dyn Write + Send>>,
 }
 
@@ -31,6 +32,7 @@ impl SfvManagerBuilder {
             format: crate::Format::Auto,
             old_data: None,
             root: None,
+            hints: vec![],
             writer: None,
         }
     }
@@ -64,11 +66,16 @@ impl SfvManagerBuilder {
         }
     }
 
+    pub fn hints(self, hints: Vec<HasherTag>) -> Self {
+        Self { hints, ..self }
+    }
+
     fn update(
         manager: &mut SfvManager,
         possible_file: &mut Option<FileInfo>,
         file: Option<FileInfo>,
         comment: &mut String,
+        hints: &[HasherTag],
         dont_check_file_exists: bool,
     ) -> bool {
         if let Some(file) = file {
@@ -85,7 +92,22 @@ impl SfvManagerBuilder {
                                 match tags {
                                     Some(tags) => match tags.len() {
                                         1 => (d, Some(tags[0])),
-                                        _ => (d, None),
+                                        _ => (d, {
+                                            let mut match_count = 0;
+                                            let mut match_tag = None;
+                                            for tag in tags {
+                                                if hints.contains(tag) {
+                                                    match_count += 1;
+                                                    match_tag = Some(*tag);
+                                                }
+                                            }
+
+                                            if match_count == 1 {
+                                                match_tag
+                                            } else {
+                                                None
+                                            }
+                                        }),
                                     },
                                     None => (d, None),
                                 }
@@ -143,6 +165,7 @@ impl SfvManagerBuilder {
                     &mut possible_file,
                     try_parse_bsd(&bsd_re, &root, line),
                     &mut comment,
+                    &self.hints,
                     false,
                 ) {
                     if format == crate::Format::Auto {
@@ -156,6 +179,7 @@ impl SfvManagerBuilder {
                     &mut possible_file,
                     try_parse_sfv(&root, line, &mut format),
                     &mut comment,
+                    &self.hints,
                     false,
                 ) {
                     continue;
@@ -166,12 +190,20 @@ impl SfvManagerBuilder {
                     &mut possible_file,
                     try_parse_file_info(&info_re, &root, line),
                     &mut comment,
+                    &self.hints,
                     false,
                 ) {
                     continue;
                 }
 
-                if Self::update(&mut manager, &mut None, possible_file, &mut comment, true) {
+                if Self::update(
+                    &mut manager,
+                    &mut None,
+                    possible_file,
+                    &mut comment,
+                    &self.hints,
+                    true,
+                ) {
                     continue;
                 }
 
