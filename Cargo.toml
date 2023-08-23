@@ -1,6 +1,6 @@
 [package]
 name = "mhash"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["maboroshinokiseki"]
@@ -9,14 +9,14 @@ description = "A simple file hashing tool"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libmhash = "0.1.0"
+libmhash = { version = "0.2.0", features = ["alter-impl"] }
 anyhow = "1.0.75"
 bytesize = "1.2.0"
 chrono = "0.4.26"
 clap = { version = "4.3.23", features = ["derive"] }
 crossbeam-channel = "0.5.8"
 hex = "0.4.3"
-kdam = {version = "0.4.0", features = ["template", "unicode"]}
+kdam = { version = "0.4.0", features = ["template", "unicode"] }
 lazy_static = "1.4.0"
 num_cpus = "1.16.0"
 regex = "1.9.3"
@@ -28,6 +28,7 @@ clap = { version = "4.3.23", features = ["derive"] }
 clap_complete = "4.3.2"
 
 [package.metadata.deb]
+name = "m-hash"
 assets = [
     [
         "target/release/mhash",
@@ -52,6 +53,7 @@ assets = [
 ]
 
 [package.metadata.generate-rpm]
+name = "m-hash"
 assets = [
     { source = "target/release/mhash", dest = "/usr/bin/mhash", mode = "755" },
     { source = "complete/mhash.bash", dest = "/usr/share/bash-completion/completions/mhash", mode = "644" },
