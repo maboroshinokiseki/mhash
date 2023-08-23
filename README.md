@@ -38,4 +38,4 @@ Test Files: Iso files of top 5 distros from DistroWatch
 
 Desc: f means --file-count, b means --block-count
 
-![Benchmark](https://github.com/maboroshinokiseki/mhash/assets/15065470/8a5c195a-4105-4855-bc7f-4b9b043e3d3c)
+![Benchmark](https://github.com/maboroshinokiseki/mhash/assets/15065470/e83ad651-7692-4be8-8332-4463f1671601)
