@@ -471,25 +471,29 @@ fn check(
                         }
 
                         if !args.no_progress {
-                            let item = pm.get(&progress_details.info.short_id);
-                            for digest_item in &progress_details.tag_to_digests[&tag] {
-                                item.inc(digest_item, progress_details.info.last_piece_size as u64);
-
-                                if *digest_item == digest {
-                                    item.complete_hash(
-                                        &digest,
-                                        &format!("{} matched", tag_to_str(&tag)),
+                            if let Some(item) = pm.try_get(&progress_details.info.short_id) {
+                                for digest_item in &progress_details.tag_to_digests[&tag] {
+                                    item.inc(
+                                        digest_item,
+                                        progress_details.info.last_piece_size as u64,
                                     );
+
+                                    if *digest_item == digest {
+                                        item.complete_hash(
+                                            &digest,
+                                            &format!("{} matched", tag_to_str(&tag)),
+                                        );
+                                    }
                                 }
-                            }
 
-                            if progress_details.info.finished_tags
-                                == progress_details.info.total_tags
-                            {
-                                item.complete_all_hash("No match");
-                            }
+                                if progress_details.info.finished_tags
+                                    == progress_details.info.total_tags
+                                {
+                                    item.complete_all_hash("No match");
+                                }
 
-                            pm.refresh().unwrap();
+                                pm.refresh().unwrap();
+                            }
                         }
 
                         if progress_details.info.finished_tags == progress_details.info.total_tags {
@@ -527,18 +531,19 @@ fn check(
                             }
 
                             if !args.no_progress {
-                                let item = pm.get(&progress_details.info.short_id);
-                                for digest in &progress_details.tag_to_digests[&tag] {
-                                    item.complete_hash(digest, &message);
-                                }
+                                if let Some(item) = pm.try_get(&progress_details.info.short_id) {
+                                    for digest in &progress_details.tag_to_digests[&tag] {
+                                        item.complete_hash(digest, &message);
+                                    }
 
-                                if progress_details.info.finished_tags
-                                    == progress_details.info.total_tags
-                                {
-                                    item.complete_all_hash("No match");
-                                }
+                                    if progress_details.info.finished_tags
+                                        == progress_details.info.total_tags
+                                    {
+                                        item.complete_all_hash("No match");
+                                    }
 
-                                pm.refresh().unwrap();
+                                    pm.refresh().unwrap();
+                                }
                             }
 
                             if progress_details.info.finished_tags
@@ -590,9 +595,10 @@ fn check(
                         }
 
                         let progress_details = id_to_progress_details.get(&identifier).unwrap();
-                        let item = pm.get(&progress_details.info.short_id);
-                        for digest in &progress_details.tag_to_digests[&tag] {
-                            item.inc(digest, block_size as u64);
+                        if let Some(item) = pm.try_get(&progress_details.info.short_id) {
+                            for digest in &progress_details.tag_to_digests[&tag] {
+                                item.inc(digest, block_size as u64);
+                            }
                         }
                     }
                     ProgressWrapper::End => break,

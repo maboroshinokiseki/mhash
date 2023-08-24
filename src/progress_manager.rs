@@ -151,9 +151,9 @@ impl ProgressManager {
         Ok(())
     }
 
-    pub fn get(&mut self, identifier: &Identifier) -> &mut ProgressGroup {
-        let index = self.progress_group_indices.get(identifier).unwrap();
-        &mut self.progress_groups[*index]
+    pub fn try_get(&mut self, identifier: &Identifier) -> Option<&mut ProgressGroup> {
+        let index = self.progress_group_indices.get(identifier)?;
+        self.progress_groups.get_mut(*index)
     }
 
     pub fn insert_error(&mut self, identifier: &Identifier, message: &str) {
