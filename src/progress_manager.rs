@@ -2,6 +2,9 @@ use std::collections::{HashMap, VecDeque};
 
 use kdam::{term, tqdm, Bar, BarExt};
 use libmhash::hasher_server::Identifier;
+use unicode_truncate::UnicodeTruncateStr;
+
+pub const MAX_TAG_LENGTH: usize = 16;
 
 // hashing:   [filename][hashname][progress/hash]
 // chekcking: [filename][hash][progress/hashname matched/no matches]
@@ -9,6 +12,7 @@ use libmhash::hasher_server::Identifier;
 pub struct ProgressManager {
     progress_group_indices: HashMap<Identifier, usize>,
     progress_groups: VecDeque<ProgressGroup>,
+    max_id_width: Option<usize>,
     max_tag_width: Option<usize>,
     active_rows: usize,
     total_rows: u16,
@@ -16,6 +20,7 @@ pub struct ProgressManager {
 
 pub struct ProgressGroup {
     identifier: Identifier,
+    id_width: usize,
     tag_width: usize,
     progress_bar_indices: HashMap<String, usize>,
     progress_bars: Vec<ProgressBar>,
@@ -30,12 +35,25 @@ pub struct ProgressBar {
 
 impl ProgressManager {
     pub fn new(max_tag_width: Option<usize>) -> Self {
+        let terminal_width = terminal_size::terminal_size()
+            .map(|(w, _)| w.0)
+            .unwrap_or(80) as usize;
+        // terminal width sub MAX_TAG_LENGTH sub [][][] sub progressbar and possible message length sub prepend ...
+        let max_id_width = terminal_width
+            .saturating_sub(max_tag_width.unwrap_or(MAX_TAG_LENGTH))
+            .saturating_sub(6)
+            .saturating_sub(16)
+            .saturating_sub(3);
+        let max_id_width = match max_id_width {
+            0 => None,
+            _ => Some(max_id_width),
+        };
         Self {
             progress_group_indices: HashMap::new(),
             progress_groups: VecDeque::new(),
+            max_id_width,
             max_tag_width,
             active_rows: 0,
-            // total_rows: 3,
             total_rows: terminal_size::terminal_size()
                 .map(|(_, h)| h.0)
                 .unwrap_or(3)
@@ -58,6 +76,7 @@ impl ProgressManager {
                     identifier,
                     length,
                     tags,
+                    self.max_id_width,
                     self.max_tag_width,
                 ));
 
@@ -163,14 +182,26 @@ impl ProgressManager {
 
     pub fn complete_file(&mut self, identifier: &Identifier, message: &str) {
         let index = self.progress_group_indices.get(identifier);
+
         match index {
             Some(index) => {
                 let progress_group = &mut self.progress_groups[*index];
                 progress_group.complete_all_hash(message);
             }
             None => {
+                let id = identifier.to_string();
+                let truncated_id = id
+                    .unicode_truncate_start(self.max_id_width.unwrap_or(usize::MAX))
+                    .0;
+
                 term::Writer::Stderr
-                    .print(format!("[{}][{}]", identifier, message).as_bytes())
+                    .print(
+                        match id == truncated_id {
+                            true => format!("[{}][{}]", id, message),
+                            false => format!("[...{}][{}]", truncated_id, message),
+                        }
+                        .as_bytes(),
+                    )
                     .unwrap();
             }
         }
@@ -182,6 +213,7 @@ impl ProgressGroup {
         identifier: Identifier,
         length: u64,
         tags: impl Iterator<Item = impl AsRef<str>> + Clone,
+        max_id_width: Option<usize>,
         max_tag_width: Option<usize>,
     ) -> Self {
         let tag_width = tags
@@ -191,19 +223,31 @@ impl ProgressGroup {
             .unwrap()
             .clamp(0, max_tag_width.unwrap_or(usize::MAX));
 
+        let id_width = max_id_width.unwrap_or(usize::MAX);
+
         let mut progress_bar_indices = HashMap::new();
         let mut progress_bars = Vec::new();
 
         for tag in tags {
+            let id = identifier.to_string();
+            let truncated_id = id.unicode_truncate_start(id_width).0;
+
             let pb = tqdm!(
                 total = 10000,
                 force_refresh = true,
                 bar_format = "{desc suffix=''}[{animation}]",
-                desc = format!(
-                    "[{}][{}]",
-                    identifier,
-                    crate::helper::ascii_string_normalize(tag.as_ref(), tag_width)
-                )
+                desc = match id == truncated_id {
+                    true => format!(
+                        "[{}][{}]",
+                        id,
+                        crate::helper::ascii_string_normalize(tag.as_ref(), tag_width)
+                    ),
+                    false => format!(
+                        "[...{}][{}]",
+                        truncated_id,
+                        crate::helper::ascii_string_normalize(tag.as_ref(), tag_width)
+                    ),
+                }
             );
 
             progress_bar_indices.insert(tag.as_ref().to_owned(), progress_bars.len());
@@ -217,6 +261,7 @@ impl ProgressGroup {
 
         Self {
             identifier,
+            id_width,
             tag_width,
             progress_bar_indices,
             progress_bars,
@@ -231,12 +276,23 @@ impl ProgressGroup {
             return;
         }
 
-        let msg = format!(
-            "[{}][{}][{}]",
-            self.identifier,
-            crate::helper::ascii_string_normalize(tag, self.tag_width),
-            message,
-        );
+        let id = self.identifier.to_string();
+        let truncated_id = id.unicode_truncate_start(self.id_width).0;
+
+        let msg = match id == truncated_id {
+            true => format!(
+                "[{}][{}][{}]",
+                id,
+                crate::helper::ascii_string_normalize(tag, self.tag_width),
+                message,
+            ),
+            false => format!(
+                "[...{}][{}][{}]",
+                truncated_id,
+                crate::helper::ascii_string_normalize(tag, self.tag_width),
+                message,
+            ),
+        };
 
         pb.bar.set_bar_format("{desc suffix=''}").unwrap();
         pb.bar.set_description(msg);
@@ -254,12 +310,23 @@ impl ProgressGroup {
                 continue;
             }
 
-            let msg = format!(
-                "[{}][{}][{}]",
-                self.identifier,
-                crate::helper::ascii_string_normalize(tag, self.tag_width),
-                message,
-            );
+            let id = self.identifier.to_string();
+            let truncated_id = id.unicode_truncate_start(self.id_width).0;
+
+            let msg = match id == truncated_id {
+                true => format!(
+                    "[{}][{}][{}]",
+                    id,
+                    crate::helper::ascii_string_normalize(tag, self.tag_width),
+                    message,
+                ),
+                false => format!(
+                    "[...{}][{}][{}]",
+                    truncated_id,
+                    crate::helper::ascii_string_normalize(tag, self.tag_width),
+                    message,
+                ),
+            };
 
             pb.bar.set_bar_format("{desc suffix=''}").unwrap();
             pb.bar.set_description(msg);

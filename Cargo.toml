@@ -1,6 +1,6 @@
 [package]
 name = "mhash"
-version = "0.3.0"
+version = "0.3.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 authors = ["maboroshinokiseki"]
@@ -9,7 +9,7 @@ description = "A simple file hashing tool"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-libmhash = { version = "0.2.0", features = ["alter-impl"] }
+libmhash = { version = "0.2.1", features = ["alter-impl"] }
 anyhow = "1.0.75"
 bytesize = "1.2.0"
 chrono = "0.4.26"
@@ -21,6 +21,7 @@ lazy_static = "1.4.0"
 num_cpus = "1.16.0"
 regex = "1.9.3"
 terminal_size = "0.2.6"
+unicode-truncate = "0.2.0"
 walkdir = "2.3.3"
 
 [build-dependencies]

@@ -342,7 +342,7 @@ fn check(
 
             let print_to_stdout = args.no_progress || !std::io::stdout().is_terminal();
 
-            let mut pm = ProgressManager::new(Some(16));
+            let mut pm = ProgressManager::new(Some(MAX_TAG_LENGTH));
 
             let mut id_to_progress_details = HashMap::new();
 
